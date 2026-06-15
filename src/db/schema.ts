@@ -1,0 +1,129 @@
+import {
+  pgTable,
+  text,
+  boolean,
+  timestamp,
+  index,
+  unique,
+} from "drizzle-orm/pg-core";
+import { createId } from "@paralleldrive/cuid2";
+
+export const boards = pgTable("boards", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  name: text("name").notNull(),
+  bgColor: text("bg_color").notNull().default("#6366f1"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const boardMembers = pgTable(
+  "board_members",
+  {
+    boardId: text("board_id")
+      .notNull()
+      .references(() => boards.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    role: text("role", { enum: ["owner", "member"] })
+      .notNull()
+      .default("member"),
+  },
+  (t) => [unique("uq_board_member").on(t.boardId, t.userId)],
+);
+
+export const columns = pgTable(
+  "columns",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    boardId: text("board_id")
+      .notNull()
+      .references(() => boards.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    sortOrder: text("sort_order").notNull(),
+  },
+  (t) => [index("idx_column_board").on(t.boardId)],
+);
+
+export const labels = pgTable("labels", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  boardId: text("board_id")
+    .notNull()
+    .references(() => boards.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  color: text("color").notNull(),
+});
+
+export const cards = pgTable(
+  "cards",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    columnId: text("column_id")
+      .notNull()
+      .references(() => columns.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    dueDate: timestamp("due_date", { withTimezone: true }),
+    sortOrder: text("sort_order").notNull(),
+    isArchived: boolean("is_archived").notNull().default(false),
+    assigneeId: text("assignee_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("idx_card_column").on(t.columnId)],
+);
+
+export const cardLabels = pgTable(
+  "card_labels",
+  {
+    cardId: text("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    labelId: text("label_id")
+      .notNull()
+      .references(() => labels.id, { onDelete: "cascade" }),
+  },
+  (t) => [unique("uq_card_label").on(t.cardId, t.labelId)],
+);
+
+export const comments = pgTable(
+  "comments",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    cardId: text("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("idx_comment_card").on(t.cardId)],
+);
+
+// Inferred row types for use across the app.
+export type Board = typeof boards.$inferSelect;
+export type NewBoard = typeof boards.$inferInsert;
+export type BoardMember = typeof boardMembers.$inferSelect;
+export type NewBoardMember = typeof boardMembers.$inferInsert;
+export type Column = typeof columns.$inferSelect;
+export type NewColumn = typeof columns.$inferInsert;
+export type Label = typeof labels.$inferSelect;
+export type NewLabel = typeof labels.$inferInsert;
+export type Card = typeof cards.$inferSelect;
+export type NewCard = typeof cards.$inferInsert;
+export type CardLabel = typeof cardLabels.$inferSelect;
+export type NewCardLabel = typeof cardLabels.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;
