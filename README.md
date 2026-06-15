@@ -58,7 +58,7 @@ src/
 
 ## Local Setup
 
-**Prerequisites:** Node.js 20+, pnpm, a PostgreSQL database (Neon or local Docker).
+**Prerequisites:** Node.js 20+, pnpm, and a free [Neon](https://neon.tech) PostgreSQL database.
 
 ```bash
 # 1. Clone and install
@@ -66,17 +66,19 @@ git clone <repo-url>
 cd kanban-board
 pnpm install
 
-# 2. Copy env and fill in values
+# 2. Copy env and fill in values (set DATABASE_URL to your Neon connection string)
 cp .env.example .env.local
 
-# 3. Push database schema (once DB is configured)
-pnpm drizzle-kit push
+# 3. Apply the database schema to Neon
+pnpm db:migrate
 
 # 4. Start the dev server
 pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+> **Tip:** Use a separate Neon **branch** for local development (e.g. a `dev` branch) and keep `production` for the deployed app. Neon branches are instant and free, so destructive schema changes during development never touch production data. Put the dev branch URL in `.env.local`; set the production URL in your host's environment variables (e.g. Vercel).
 
 ## Environment Variables
 
