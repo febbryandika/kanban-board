@@ -33,6 +33,7 @@ import { AddColumnForm } from "./add-column-form";
 import { BoardColumn } from "./board-column";
 import { BoardSkeleton } from "./board-skeleton";
 import { CardItem } from "./card-item";
+import { CardModal } from "./card-modal";
 import { SortableColumn } from "./sortable-column";
 
 type DragData =
@@ -191,7 +192,12 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
             strategy={horizontalListSortingStrategy}
           >
             {data.columns.map((column) => (
-              <SortableColumn key={column.id} boardId={boardId} column={column} />
+              <SortableColumn
+                key={column.id}
+                boardId={boardId}
+                column={column}
+                members={data.members}
+              />
             ))}
           </SortableContext>
           <AddColumnForm boardId={boardId} />
@@ -199,12 +205,19 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
 
         <DragOverlay>
           {activeColumn ? (
-            <BoardColumn boardId={boardId} column={activeColumn} isOverlay />
+            <BoardColumn
+              boardId={boardId}
+              column={activeColumn}
+              members={data.members}
+              isOverlay
+            />
           ) : activeCard ? (
-            <CardItem boardId={boardId} card={activeCard} />
+            <CardItem boardId={boardId} card={activeCard} members={data.members} />
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      <CardModal boardId={boardId} />
     </main>
   );
 }

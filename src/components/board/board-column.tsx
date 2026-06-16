@@ -7,7 +7,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useRenameColumn } from "@/hooks/useColumnMutations";
-import type { BoardColumnWithCards } from "@/types/board";
+import type { BoardColumnWithCards, BoardMemberInfo } from "@/types/board";
 
 import { AddCardForm } from "./add-card-form";
 import { CardItem } from "./card-item";
@@ -22,11 +22,13 @@ export type ColumnDragHandle = {
 function BoardColumnImpl({
   boardId,
   column,
+  members,
   dragHandle,
   isOverlay = false,
 }: {
   boardId: string;
   column: BoardColumnWithCards;
+  members?: BoardMemberInfo[];
   dragHandle?: ColumnDragHandle;
   isOverlay?: boolean;
 }) {
@@ -67,7 +69,12 @@ function BoardColumnImpl({
           <p className="px-1 py-2 text-xs text-muted-foreground">No cards</p>
         ) : isOverlay ? (
           column.cards.map((card) => (
-            <CardItem key={card.id} boardId={boardId} card={card} />
+            <CardItem
+              key={card.id}
+              boardId={boardId}
+              card={card}
+              members={members}
+            />
           ))
         ) : (
           <SortableContext
@@ -75,7 +82,12 @@ function BoardColumnImpl({
             strategy={verticalListSortingStrategy}
           >
             {column.cards.map((card) => (
-              <SortableCard key={card.id} boardId={boardId} card={card} />
+              <SortableCard
+                key={card.id}
+                boardId={boardId}
+                card={card}
+                members={members}
+              />
             ))}
           </SortableContext>
         )}

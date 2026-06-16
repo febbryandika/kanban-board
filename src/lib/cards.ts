@@ -22,12 +22,22 @@ export async function loadCardForMember(id: string) {
     return {
       card: null,
       boardId: null,
+      session: null,
+      membership: null,
       notFound: NextResponse.json(
         { error: { code: "NOT_FOUND", message: "Card not found" } },
         { status: 404 },
       ),
     };
   }
-  await requireMember(row.boardId);
-  return { card: row.card, boardId: row.boardId, notFound: null };
+  // `requireMember` returns the session + membership row (with `role`) so callers
+  // can do ownership checks and stamp `userId`/`assigneeId` without re-querying.
+  const { session, membership } = await requireMember(row.boardId);
+  return {
+    card: row.card,
+    boardId: row.boardId,
+    session,
+    membership,
+    notFound: null,
+  };
 }

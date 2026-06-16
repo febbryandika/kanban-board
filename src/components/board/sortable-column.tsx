@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import type { BoardColumnWithCards } from "@/types/board";
+import type { BoardColumnWithCards, BoardMemberInfo } from "@/types/board";
 
 import { BoardColumn } from "./board-column";
 
@@ -12,9 +12,11 @@ import { BoardColumn } from "./board-column";
 export function SortableColumn({
   boardId,
   column,
+  members,
 }: {
   boardId: string;
   column: BoardColumnWithCards;
+  members?: BoardMemberInfo[];
 }) {
   const {
     attributes,
@@ -37,6 +39,7 @@ export function SortableColumn({
       <BoardColumn
         boardId={boardId}
         column={column}
+        members={members}
         dragHandle={{ attributes, listeners }}
       />
     </div>

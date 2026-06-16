@@ -2,7 +2,15 @@ import { NextResponse } from "next/server";
 import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
-import { boards, cardLabels, cards, columns, labels } from "@/db/schema";
+import {
+  boardMembers,
+  boards,
+  cardLabels,
+  cards,
+  columns,
+  labels,
+  user,
+} from "@/db/schema";
 import { requireMember, errorResponse } from "@/lib/auth";
 import type { BoardCardItem, BoardDetail, BoardLabel } from "@/types/board";
 
@@ -13,7 +21,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const { membership } = await requireMember(id);
+    const { session, membership } = await requireMember(id);
 
     const [board] = await db
       .select()
@@ -49,6 +57,18 @@ export async function GET(
       .select()
       .from(labels)
       .where(eq(labels.boardId, id));
+
+    const boardMemberRows = await db
+      .select({
+        userId: boardMembers.userId,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        role: boardMembers.role,
+      })
+      .from(boardMembers)
+      .innerJoin(user, eq(boardMembers.userId, user.id))
+      .where(eq(boardMembers.boardId, id));
 
     const links = cardIds.length
       ? await db
@@ -92,10 +112,18 @@ export async function GET(
       name: board.name,
       bgColor: board.bgColor,
       role: membership.role,
+      currentUserId: session.user.id,
       labels: boardLabels.map((l) => ({
         id: l.id,
         name: l.name,
         color: l.color,
+      })),
+      members: boardMemberRows.map((m) => ({
+        userId: m.userId,
+        name: m.name,
+        email: m.email,
+        image: m.image,
+        role: m.role,
       })),
       columns: boardColumns.map((col) => ({
         id: col.id,

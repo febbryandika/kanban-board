@@ -23,11 +23,34 @@ export type BoardColumnWithCards = {
   cards: BoardCardItem[];
 };
 
+/** A board member, resolved against the Better Auth user table, so the UI can
+ * render assignee names/avatars and the assignee picker. */
+export type BoardMemberInfo = {
+  userId: string;
+  name: string;
+  email: string;
+  image: string | null;
+  role: "owner" | "member";
+};
+
 export type BoardDetail = {
   id: string;
   name: string;
   bgColor: string;
   role: "owner" | "member";
+  currentUserId: string;
   labels: BoardLabel[];
+  members: BoardMemberInfo[];
   columns: BoardColumnWithCards[];
+};
+
+/** A card comment with its author's name resolved, as returned by
+ * `GET /api/cards/:id/comments` (chronological). */
+export type CardComment = {
+  id: string;
+  cardId: string;
+  userId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
 };

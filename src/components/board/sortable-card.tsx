@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import type { BoardCardItem } from "@/types/board";
+import type { BoardCardItem, BoardMemberInfo } from "@/types/board";
 
 import { CardItem } from "./card-item";
 
@@ -13,9 +13,11 @@ import { CardItem } from "./card-item";
 export function SortableCard({
   boardId,
   card,
+  members,
 }: {
   boardId: string;
   card: BoardCardItem;
+  members?: BoardMemberInfo[];
 }) {
   const {
     attributes,
@@ -42,7 +44,7 @@ export function SortableCard({
       {...attributes}
       {...listeners}
     >
-      <CardItem boardId={boardId} card={card} />
+      <CardItem boardId={boardId} card={card} members={members} />
     </div>
   );
 }

@@ -2,8 +2,11 @@
 
 import { memo } from "react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { BoardCardItem } from "@/types/board";
+import { useUiStore } from "@/stores/ui";
+import { getInitials } from "@/lib/utils";
+import type { BoardCardItem, BoardMemberInfo } from "@/types/board";
 
 import { CardMenu } from "./card-menu";
 
@@ -14,19 +17,28 @@ function formatDueDate(iso: string): string {
   });
 }
 
-/** Display-only card. The card detail modal arrives in a later phase. Memoized
- * so a card move only re-renders the moved card and its columns, not the board. */
+/** Card preview. Clicking opens the detail modal (via the UI store). Memoized so
+ * a card move only re-renders the moved card and its columns, not the board. */
 function CardItemImpl({
   boardId,
   card,
+  members,
 }: {
   boardId: string;
   card: BoardCardItem;
+  members?: BoardMemberInfo[];
 }) {
+  const openCard = useUiStore((s) => s.openCard);
+  const assignee = card.assigneeId
+    ? (members?.find((m) => m.userId === card.assigneeId) ?? null)
+    : null;
   const hasFooter = Boolean(card.dueDate) || Boolean(card.assigneeId);
 
   return (
-    <div className="rounded-md border bg-card p-3 text-sm shadow-sm">
+    <div
+      className="cursor-pointer rounded-md border bg-card p-3 text-sm shadow-sm hover:border-foreground/20"
+      onClick={() => openCard(card.id)}
+    >
       {card.labels.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1">
           {card.labels.map((l) => (
@@ -42,7 +54,10 @@ function CardItemImpl({
 
       <div className="flex items-start justify-between gap-1">
         <p className="flex-1 font-medium leading-snug">{card.title}</p>
-        <CardMenu boardId={boardId} cardId={card.id} />
+        {/* Stop the menu from also opening the modal. */}
+        <div onClick={(e) => e.stopPropagation()}>
+          <CardMenu boardId={boardId} cardId={card.id} />
+        </div>
       </div>
 
       {hasFooter && (
@@ -52,9 +67,18 @@ function CardItemImpl({
           ) : (
             <span />
           )}
-          {card.assigneeId && (
-            <span className="h-6 w-6 rounded-full bg-muted" aria-label="Assignee" />
-          )}
+          {card.assigneeId &&
+            (assignee ? (
+              <Avatar size="sm">
+                <AvatarImage src={assignee.image ?? undefined} alt={assignee.name} />
+                <AvatarFallback>{getInitials(assignee.name)}</AvatarFallback>
+              </Avatar>
+            ) : (
+              <span
+                className="size-6 rounded-full bg-muted"
+                aria-label="Assignee"
+              />
+            ))}
         </div>
       )}
     </div>
