@@ -6,6 +6,7 @@ import { useBoard } from "@/hooks/useBoard";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
+import { AddColumnForm } from "./add-column-form";
 import { BoardColumn } from "./board-column";
 import { BoardSkeleton } from "./board-skeleton";
 
@@ -38,19 +39,12 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
         </Button>
       </header>
 
-      {data.columns.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="text-sm text-muted-foreground">
-            This board has no columns yet.
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-1 gap-4 overflow-x-auto p-4">
-          {data.columns.map((column) => (
-            <BoardColumn key={column.id} column={column} />
-          ))}
-        </div>
-      )}
+      <div className="flex flex-1 gap-4 overflow-x-auto p-4">
+        {data.columns.map((column) => (
+          <BoardColumn key={column.id} boardId={boardId} column={column} />
+        ))}
+        <AddColumnForm boardId={boardId} />
+      </div>
     </main>
   );
 }
