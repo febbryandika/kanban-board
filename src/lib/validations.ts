@@ -59,18 +59,48 @@ export const createCardSchema = z.object({
   title: z.string().trim().min(1, "Card title is required").max(200),
 });
 
-// PATCH /api/cards/:id is move (columnId + sortOrder) this phase; field editing
-// (title/description/dueDate/assignee/labels) lands with the card modal.
+// PATCH /api/cards/:id covers both a move (columnId + sortOrder) and modal field
+// edits (title/description/dueDate/assignee). Every field is optional; require at
+// least one. `description`/`dueDate`/`assigneeId` accept null to clear, so the
+// "something to update" check tests for any key that is not `undefined`.
 export const updateCardSchema = z
   .object({
     columnId: z.string().min(1).optional(),
     sortOrder: z.string().min(1, "Sort order is required").optional(),
+    title: z.string().trim().min(1, "Card title is required").max(200).optional(),
+    description: z.string().max(5000, "Description is too long").nullable().optional(),
+    dueDate: z.string().datetime("Invalid date").nullable().optional(),
+    assigneeId: z.string().min(1).nullable().optional(),
   })
-  .refine((d) => d.columnId !== undefined || d.sortOrder !== undefined, {
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
     message: "Nothing to update",
   });
 
 export const archiveCardSchema = z.object({ isArchived: z.boolean() });
+
+const LABEL_COLOR_RE = BG_COLOR_RE;
+
+export const createLabelSchema = z.object({
+  boardId: z.string().min(1),
+  name: z.string().trim().min(1, "Label name is required").max(30),
+  color: z.string().regex(LABEL_COLOR_RE, "Invalid color"),
+});
+
+export const updateLabelSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1, "Label name is required").max(30),
+  color: z.string().regex(LABEL_COLOR_RE, "Invalid color"),
+});
+
+export const deleteLabelSchema = z.object({ id: z.string().min(1) });
+
+// Apply/remove a label on a card. The card id comes from the route param.
+export const cardLabelSchema = z.object({ labelId: z.string().min(1) });
+
+// Create a comment on a card. The card id comes from the route param.
+export const createCommentSchema = z.object({
+  content: z.string().trim().min(1, "Comment cannot be empty").max(2000),
+});
 
 export type CreateBoardInput = z.infer<typeof createBoardSchema>;
 export type RenameBoardInput = z.infer<typeof renameBoardSchema>;
@@ -81,3 +111,8 @@ export type UpdateColumnInput = z.infer<typeof updateColumnSchema>;
 export type CreateCardInput = z.infer<typeof createCardSchema>;
 export type UpdateCardInput = z.infer<typeof updateCardSchema>;
 export type ArchiveCardInput = z.infer<typeof archiveCardSchema>;
+export type CreateLabelInput = z.infer<typeof createLabelSchema>;
+export type UpdateLabelInput = z.infer<typeof updateLabelSchema>;
+export type DeleteLabelInput = z.infer<typeof deleteLabelSchema>;
+export type CardLabelInput = z.infer<typeof cardLabelSchema>;
+export type CreateCommentInput = z.infer<typeof createCommentSchema>;

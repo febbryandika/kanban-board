@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { cards, columns } from "@/db/schema";
+import { boardMembers, cards, columns } from "@/db/schema";
 import { errorResponse } from "@/lib/auth";
 import { loadCardForMember } from "@/lib/cards";
 import { updateCardSchema } from "@/lib/validations";
 
-/** PATCH move a card (columnId + sortOrder). Only the moved row is written. */
+/** PATCH a card: either a move (columnId + sortOrder) or modal field edits
+ * (title / description / dueDate / assignee). Only the targeted row is written. */
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -46,9 +47,42 @@ export async function PATCH(
       }
     }
 
+    // An assignee must be a member of this board.
+    if (parsed.data.assigneeId) {
+      const [member] = await db
+        .select({ userId: boardMembers.userId })
+        .from(boardMembers)
+        .where(
+          and(
+            eq(boardMembers.boardId, boardId),
+            eq(boardMembers.userId, parsed.data.assigneeId),
+          ),
+        )
+        .limit(1);
+      if (!member) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "INVALID_ASSIGNEE",
+              message: "Assignee is not a member of this board",
+            },
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    // `dueDate` arrives as an ISO string (or null); Drizzle wants a Date. Every
+    // other parsed key is a `cards` column and passes through untouched.
+    const { dueDate, ...rest } = parsed.data;
+    const updateSet: Partial<typeof cards.$inferInsert> = { ...rest };
+    if (dueDate !== undefined) {
+      updateSet.dueDate = dueDate === null ? null : new Date(dueDate);
+    }
+
     const [updated] = await db
       .update(cards)
-      .set(parsed.data)
+      .set(updateSet)
       .where(eq(cards.id, card.id))
       .returning();
 

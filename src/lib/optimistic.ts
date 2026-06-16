@@ -1,4 +1,4 @@
-import type { BoardCardItem, BoardDetail } from "@/types/board";
+import type { BoardCardItem, BoardDetail, BoardLabel } from "@/types/board";
 
 /** Apply a column reorder to the cached board: set the moved column's sortOrder
  * and re-sort. Pure and side-effect free so it can be unit-tested (SPEC §10) and
@@ -53,5 +53,63 @@ export function optimisticallyMoveCard(
     return without.length === col.cards.length ? col : { ...col, cards: without };
   });
 
+  return { ...board, columns };
+}
+
+/** Card field edits (title / description / dueDate / assignee) for the modal's
+ * optimistic update. Only the card's column changes identity; others are kept
+ * for memoization. Pure (SPEC §10). */
+export function optimisticallyUpdateCard(
+  board: BoardDetail,
+  patch: { cardId: string } & Partial<
+    Pick<BoardCardItem, "title" | "description" | "dueDate" | "assigneeId">
+  >,
+): BoardDetail {
+  const { cardId, ...fields } = patch;
+  const columns = board.columns.map((col) => {
+    if (!col.cards.some((c) => c.id === cardId)) return col;
+    return {
+      ...col,
+      cards: col.cards.map((c) => (c.id === cardId ? { ...c, ...fields } : c)),
+    };
+  });
+  return { ...board, columns };
+}
+
+/** Add a label to a card optimistically (no-op if already applied). Pure. */
+export function optimisticallyAddCardLabel(
+  board: BoardDetail,
+  input: { cardId: string; label: BoardLabel },
+): BoardDetail {
+  const columns = board.columns.map((col) => {
+    if (!col.cards.some((c) => c.id === input.cardId)) return col;
+    return {
+      ...col,
+      cards: col.cards.map((c) =>
+        c.id === input.cardId && !c.labels.some((l) => l.id === input.label.id)
+          ? { ...c, labels: [...c.labels, input.label] }
+          : c,
+      ),
+    };
+  });
+  return { ...board, columns };
+}
+
+/** Remove a label from a card optimistically. Pure. */
+export function optimisticallyRemoveCardLabel(
+  board: BoardDetail,
+  input: { cardId: string; labelId: string },
+): BoardDetail {
+  const columns = board.columns.map((col) => {
+    if (!col.cards.some((c) => c.id === input.cardId)) return col;
+    return {
+      ...col,
+      cards: col.cards.map((c) =>
+        c.id === input.cardId
+          ? { ...c, labels: c.labels.filter((l) => l.id !== input.labelId) }
+          : c,
+      ),
+    };
+  });
   return { ...board, columns };
 }
