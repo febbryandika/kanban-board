@@ -4,12 +4,19 @@ import { useState } from "react";
 import { PlusIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useCreateCard } from "@/hooks/useCardMutations";
 
-/** Inline add-card affordance. UI-only this phase — submit is a stub; wiring to
- * `POST /api/cards` lands in the card-CRUD phase. */
-export function AddCardForm({ columnId }: { columnId: string }) {
+/** Inline add-card affordance. Optimistically appends a card to the column. */
+export function AddCardForm({
+  boardId,
+  columnId,
+}: {
+  boardId: string;
+  columnId: string;
+}) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+  const createCard = useCreateCard(boardId);
 
   function reset() {
     setValue("");
@@ -18,8 +25,9 @@ export function AddCardForm({ columnId }: { columnId: string }) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO(card-CRUD phase): POST /api/cards { columnId, title: value } then
-    // invalidate ['board', boardId]. No persistence yet.
+    const title = value.trim();
+    if (!title) return;
+    createCard.mutate({ columnId, title });
     reset();
   }
 

@@ -1,5 +1,11 @@
+"use client";
+
+import { memo } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import type { BoardCardItem } from "@/types/board";
+
+import { CardMenu } from "./card-menu";
 
 function formatDueDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -8,8 +14,15 @@ function formatDueDate(iso: string): string {
   });
 }
 
-/** Display-only card. The card detail modal arrives in a later phase. */
-export function CardItem({ card }: { card: BoardCardItem }) {
+/** Display-only card. The card detail modal arrives in a later phase. Memoized
+ * so a card move only re-renders the moved card and its columns, not the board. */
+function CardItemImpl({
+  boardId,
+  card,
+}: {
+  boardId: string;
+  card: BoardCardItem;
+}) {
   const hasFooter = Boolean(card.dueDate) || Boolean(card.assigneeId);
 
   return (
@@ -27,7 +40,10 @@ export function CardItem({ card }: { card: BoardCardItem }) {
         </div>
       )}
 
-      <p className="font-medium leading-snug">{card.title}</p>
+      <div className="flex items-start justify-between gap-1">
+        <p className="flex-1 font-medium leading-snug">{card.title}</p>
+        <CardMenu boardId={boardId} cardId={card.id} />
+      </div>
 
       {hasFooter && (
         <div className="mt-2 flex items-center justify-between">
@@ -44,3 +60,5 @@ export function CardItem({ card }: { card: BoardCardItem }) {
     </div>
   );
 }
+
+export const CardItem = memo(CardItemImpl);
