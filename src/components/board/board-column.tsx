@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
+import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,13 +12,23 @@ import type { BoardColumnWithCards } from "@/types/board";
 import { AddCardForm } from "./add-card-form";
 import { CardItem } from "./card-item";
 import { ColumnMenu } from "./column-menu";
+import { SortableCard } from "./sortable-card";
 
-export function BoardColumn({
+export type ColumnDragHandle = {
+  attributes: DraggableAttributes;
+  listeners: DraggableSyntheticListeners;
+};
+
+function BoardColumnImpl({
   boardId,
   column,
+  dragHandle,
+  isOverlay = false,
 }: {
   boardId: string;
   column: BoardColumnWithCards;
+  dragHandle?: ColumnDragHandle;
+  isOverlay?: boolean;
 }) {
   const [isRenaming, setIsRenaming] = useState(false);
 
@@ -32,16 +44,20 @@ export function BoardColumn({
           />
         ) : (
           <>
-            <h2 className="truncate text-sm font-semibold">{column.name}</h2>
-            <div className="flex shrink-0 items-center gap-1">
+            <div
+              className="flex flex-1 items-center gap-2 touch-none select-none [cursor:grab] active:[cursor:grabbing]"
+              {...dragHandle?.attributes}
+              {...dragHandle?.listeners}
+            >
+              <h2 className="truncate text-sm font-semibold">{column.name}</h2>
               <Badge variant="secondary">{column.cards.length}</Badge>
-              <ColumnMenu
-                boardId={boardId}
-                columnId={column.id}
-                columnName={column.name}
-                onRename={() => setIsRenaming(true)}
-              />
             </div>
+            <ColumnMenu
+              boardId={boardId}
+              columnId={column.id}
+              columnName={column.name}
+              onRename={() => setIsRenaming(true)}
+            />
           </>
         )}
       </div>
@@ -49,15 +65,28 @@ export function BoardColumn({
       <div className="flex flex-col gap-2">
         {column.cards.length === 0 ? (
           <p className="px-1 py-2 text-xs text-muted-foreground">No cards</p>
+        ) : isOverlay ? (
+          column.cards.map((card) => (
+            <CardItem key={card.id} boardId={boardId} card={card} />
+          ))
         ) : (
-          column.cards.map((card) => <CardItem key={card.id} card={card} />)
+          <SortableContext
+            items={column.cards.map((c) => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {column.cards.map((card) => (
+              <SortableCard key={card.id} boardId={boardId} card={card} />
+            ))}
+          </SortableContext>
         )}
       </div>
 
-      <AddCardForm columnId={column.id} />
+      <AddCardForm boardId={boardId} columnId={column.id} />
     </div>
   );
 }
+
+export const BoardColumn = memo(BoardColumnImpl);
 
 /** Inline rename input shown in the column header. Commits once on Enter or
  * blur; Escape cancels without saving (the guard ref prevents the unmount-blur
