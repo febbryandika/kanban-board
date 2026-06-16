@@ -39,7 +39,24 @@ export const inviteMemberSchema = z.object({
     .pipe(z.string().email("Enter a valid email")),
 });
 
+export const createColumnSchema = z.object({
+  boardId: z.string().min(1),
+  name: z.string().trim().min(1, "Column name is required").max(40),
+});
+
+// PATCH /api/columns/:id is rename and/or reorder; require at least one field.
+export const updateColumnSchema = z
+  .object({
+    name: z.string().trim().min(1, "Column name is required").max(40).optional(),
+    sortOrder: z.string().min(1, "Sort order is required").optional(),
+  })
+  .refine((d) => d.name !== undefined || d.sortOrder !== undefined, {
+    message: "Nothing to update",
+  });
+
 export type CreateBoardInput = z.infer<typeof createBoardSchema>;
 export type RenameBoardInput = z.infer<typeof renameBoardSchema>;
 export type DeleteBoardInput = z.infer<typeof deleteBoardSchema>;
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+export type CreateColumnInput = z.infer<typeof createColumnSchema>;
+export type UpdateColumnInput = z.infer<typeof updateColumnSchema>;
