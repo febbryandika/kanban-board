@@ -77,6 +77,18 @@ export async function requireMember(boardId: string) {
   return { session, membership };
 }
 
+/**
+ * Require the current user to be the OWNER of `boardId`.
+ * Throws 401 when signed out, 403 when not the owner.
+ */
+export async function requireOwner(boardId: string) {
+  const result = await requireMember(boardId);
+  if (result.membership.role !== "owner") {
+    throw new AuthError("FORBIDDEN", "Only the board owner can do this", 403);
+  }
+  return result;
+}
+
 /** Map an error to the standard `{ error: { code, message } }` JSON response. */
 export function errorResponse(error: unknown) {
   if (error instanceof AuthError) {
