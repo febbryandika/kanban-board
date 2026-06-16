@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { boards, boardMembers, user } from "@/db/schema";
+import { boards, boardMembers, columns, user } from "@/db/schema";
 import { requireSession, requireMember, requireOwner } from "@/lib/auth";
 import {
   ok,
@@ -45,6 +45,14 @@ export async function createBoard(
         userId: session.user.id,
         role: "owner",
       });
+      // Seed the default columns (SPEC §1). "a0"/"a1"/"a2" are the keys
+      // generateKeyBetween produces sequentially, so future inserts/moves chain
+      // off them cleanly without a fractional helper here.
+      await tx.insert(columns).values([
+        { boardId: board.id, name: "To Do", sortOrder: "a0" },
+        { boardId: board.id, name: "In Progress", sortOrder: "a1" },
+        { boardId: board.id, name: "Done", sortOrder: "a2" },
+      ]);
       return board.id;
     });
 
