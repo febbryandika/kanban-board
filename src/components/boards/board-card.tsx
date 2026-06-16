@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   MoreVerticalIcon,
   PencilIcon,
@@ -42,7 +43,11 @@ export function BoardCard({
     <>
       <Card className="border-l-4" style={{ borderLeftColor: board.bgColor }}>
         <CardHeader>
-          <CardTitle className="truncate">{board.name}</CardTitle>
+          <CardTitle className="truncate">
+            <Link href={`/board/${board.id}`} className="hover:underline">
+              {board.name}
+            </Link>
+          </CardTitle>
           <CardAction>
             <DropdownMenu>
               <DropdownMenuTrigger
