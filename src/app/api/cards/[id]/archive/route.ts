@@ -4,11 +4,14 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cards } from "@/db/schema";
 import { errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
 import { loadCardForMember } from "@/lib/cards";
 import { archiveCardSchema } from "@/lib/validations";
 
+export const PATCH = withApiLogging("cards.archive", archiveCard);
+
 /** PATCH archive/unarchive a card (soft delete via `isArchived`). */
-export async function PATCH(
+async function archiveCard(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {

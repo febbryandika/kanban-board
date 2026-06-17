@@ -29,7 +29,7 @@ import {
 export async function createLabel(
   input: CreateLabelInput,
 ): Promise<ActionResult<Label>> {
-  return runAction(async () => {
+  return runAction("label.create", async () => {
     const parsed = createLabelSchema.safeParse(input);
     if (!parsed.success) {
       return fail("VALIDATION", parsed.error.issues[0]?.message ?? "Invalid input");
@@ -53,7 +53,7 @@ export async function createLabel(
 export async function updateLabel(
   input: UpdateLabelInput,
 ): Promise<ActionResult<Label>> {
-  return runAction(async () => {
+  return runAction("label.update", async () => {
     const parsed = updateLabelSchema.safeParse(input);
     if (!parsed.success) {
       return fail("VALIDATION", parsed.error.issues[0]?.message ?? "Invalid input");
@@ -81,7 +81,7 @@ export async function updateLabel(
 export async function deleteLabel(
   input: DeleteLabelInput,
 ): Promise<ActionResult> {
-  return runAction(async () => {
+  return runAction("label.delete", async () => {
     const parsed = deleteLabelSchema.safeParse(input);
     if (!parsed.success)
       return fail("VALIDATION", parsed.error.issues[0]?.message ?? "Invalid input");

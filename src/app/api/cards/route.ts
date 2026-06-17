@@ -4,12 +4,15 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cards, columns } from "@/db/schema";
 import { requireMember, errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
 import { keyForAppend } from "@/lib/fractional";
 import { createCardSchema } from "@/lib/validations";
 
+export const POST = withApiLogging("cards.create", createCard);
+
 /** POST create a card at the end of its column. Membership-gated via the
  * column's board. */
-export async function POST(req: Request) {
+async function createCard(req: Request) {
   try {
     const parsed = createCardSchema.safeParse(await req.json());
     if (!parsed.success) {

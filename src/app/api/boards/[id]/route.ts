@@ -12,10 +12,13 @@ import {
   user,
 } from "@/db/schema";
 import { requireMember, errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
 import type { BoardCardItem, BoardDetail, BoardLabel } from "@/types/board";
 
+export const GET = withApiLogging("boards.get", getBoard);
+
 /** GET full board: columns → cards → labels. Membership-gated. */
-export async function GET(
+async function getBoard(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {

@@ -4,8 +4,12 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cardLabels, labels } from "@/db/schema";
 import { errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
 import { loadCardForMember } from "@/lib/cards";
 import { cardLabelSchema } from "@/lib/validations";
+
+export const POST = withApiLogging("cardLabels.add", addCardLabel);
+export const DELETE = withApiLogging("cardLabels.remove", removeCardLabel);
 
 function isUniqueViolation(e: unknown): boolean {
   return (
@@ -17,7 +21,7 @@ function isUniqueViolation(e: unknown): boolean {
 }
 
 /** POST apply a label to a card. The label must belong to the card's board. */
-export async function POST(
+async function addCardLabel(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -69,7 +73,7 @@ export async function POST(
 }
 
 /** DELETE remove a label from a card. */
-export async function DELETE(
+async function removeCardLabel(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {

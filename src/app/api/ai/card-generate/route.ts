@@ -4,15 +4,21 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 
 import { requireSession, errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
+import { logger, serializeError } from "@/lib/logger";
 import { checkAiRateLimit } from "@/lib/ratelimit";
 import { aiCardGenerateSchema } from "@/lib/validations";
+
+const MODEL = "gpt-4.1-mini";
+
+export const POST = withApiLogging("ai.card_generate", generateCard);
 
 /**
  * POST /api/ai/card-generate — turn a rough idea into a card draft (SPEC §3.5/§5.3).
  * Session-required, but NOT board-gated: it touches no board data and only returns
  * a draft for the client to pre-fill the add-card form (never auto-creates a card).
  */
-export async function POST(req: Request) {
+async function generateCard(req: Request) {
   const start = Date.now();
   try {
     const session = await requireSession(); // 401 via errorResponse if unauthenticated
@@ -51,7 +57,7 @@ export async function POST(req: Request) {
     const signal = AbortSignal.timeout(15_000);
     try {
       const { object } = await generateObject({
-        model: openai("gpt-4.1-mini"),
+        model: openai(MODEL),
         schema: z.object({
           title: z.string(),
           description: z.string(),
@@ -64,12 +70,17 @@ Task idea: "${idea}"
 Return a concise title, a 2–3 sentence description, and 3–5 acceptance criteria.`,
       });
 
-      console.info("[ai/card-generate] ok", { ms: Date.now() - start });
+      logger.info("ai.card_generate.ok", {
+        ms: Date.now() - start,
+        userId: session.user.id,
+        ideaLen: idea.length,
+        model: MODEL,
+      });
       return NextResponse.json(object);
     } catch (aiErr) {
       const ms = Date.now() - start;
       if (signal.aborted) {
-        console.error("[ai/card-generate] timeout", { ms });
+        logger.warn("ai.card_generate.timeout", { ms, userId: session.user.id });
         return NextResponse.json(
           { error: { code: "AI_TIMEOUT", message: "AI request timed out" } },
           { status: 504 },
@@ -77,7 +88,11 @@ Return a concise title, a 2–3 sentence description, and 3–5 acceptance crite
       }
       // Malformed output (rejected by the Zod schema) or a provider error —
       // fail safely with a structured response (SPEC §9).
-      console.error("[ai/card-generate] failed", { ms, error: aiErr });
+      logger.error("ai.card_generate.failed", {
+        ms,
+        userId: session.user.id,
+        error: serializeError(aiErr),
+      });
       return NextResponse.json(
         {
           error: {

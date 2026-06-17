@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { boardMembers } from "@/db/schema";
 import { env } from "@/lib/env";
+import { logger, serializeError } from "@/lib/logger";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg" }),
@@ -104,14 +105,16 @@ export async function requireOwner(boardId: string) {
 }
 
 /** Map an error to the standard `{ error: { code, message } }` JSON response. */
-export function errorResponse(error: unknown) {
+export function errorResponse(error: unknown, context?: Record<string, unknown>) {
   if (error instanceof AuthError) {
+    // Expected 4xx (auth/authorization/validation) — debug only, no error noise.
+    logger.debug("api.auth_error", { ...context, code: error.code, status: error.status });
     return NextResponse.json(
       { error: { code: error.code, message: error.message } },
       { status: error.status },
     );
   }
-  console.error("Unhandled API error:", error);
+  logger.error("api.unhandled", { ...context, error: serializeError(error) });
   return NextResponse.json(
     { error: { code: "INTERNAL_ERROR", message: "Something went wrong" } },
     { status: 500 },

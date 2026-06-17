@@ -4,11 +4,14 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { columns } from "@/db/schema";
 import { requireMember, errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
 import { keyForAppend } from "@/lib/fractional";
 import { createColumnSchema } from "@/lib/validations";
 
+export const POST = withApiLogging("columns.create", createColumn);
+
 /** POST create a column at the end of its board. Membership-gated. */
-export async function POST(req: Request) {
+async function createColumn(req: Request) {
   try {
     const parsed = createColumnSchema.safeParse(await req.json());
     if (!parsed.success) {

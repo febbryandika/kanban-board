@@ -4,7 +4,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { columns } from "@/db/schema";
 import { requireSession, requireMember, errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
 import { updateColumnSchema } from "@/lib/validations";
+
+export const PATCH = withApiLogging("columns.update", updateColumn);
+export const DELETE = withApiLogging("columns.delete", deleteColumn);
 
 /** Look up a column and gate on board membership. Returns the column or a 404
  * NextResponse. Throws AuthError (handled by the caller's errorResponse).
@@ -31,7 +35,7 @@ async function loadColumnForMember(id: string) {
 }
 
 /** PATCH rename and/or reorder a column. Only the moved row's sortOrder is written. */
-export async function PATCH(
+async function updateColumn(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -66,7 +70,7 @@ export async function PATCH(
 }
 
 /** DELETE a column. FK cascade removes its cards, card_labels, and comments. */
-export async function DELETE(
+async function deleteColumn(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
