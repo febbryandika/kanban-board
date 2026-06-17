@@ -1,12 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { PlusIcon, SparklesIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useCreateCard } from "@/hooks/useCardMutations";
+import { useGenerateCard, type GeneratedCard } from "@/hooks/useGenerateCard";
+import type { BoardDetail } from "@/types/board";
 
-/** Inline add-card affordance. Optimistically appends a card to the column. */
+/** Fold the AI's acceptance criteria into the Markdown description as a checklist
+ * (there is no AC column). The user reviews/edits before saving. */
+function buildDescription(ai: GeneratedCard): string {
+  const criteria = ai.acceptanceCriteria.filter((c) => c.trim().length > 0);
+  if (criteria.length === 0) return ai.description;
+  const checklist = criteria.map((c) => `- [ ] ${c}`).join("\n");
+  return `${ai.description}\n\n## Acceptance Criteria\n${checklist}`;
+}
+
+/** Inline add-card affordance. Optimistically appends a card to the column.
+ * Also offers AI "✨ Generate": the input doubles as a rough idea, and the
+ * result pre-fills title + description for review before the card is created. */
 export function AddCardForm({
   boardId,
   columnId,
@@ -16,10 +30,15 @@ export function AddCardForm({
 }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+  const [description, setDescription] = useState("");
   const createCard = useCreateCard(boardId);
+  const generate = useGenerateCard();
+  const qc = useQueryClient();
 
   function reset() {
     setValue("");
+    setDescription("");
+    generate.reset();
     setOpen(false);
   }
 
@@ -27,8 +46,24 @@ export function AddCardForm({
     e.preventDefault();
     const title = value.trim();
     if (!title) return;
-    createCard.mutate({ columnId, title });
+    const desc = description.trim();
+    createCard.mutate({ columnId, title, description: desc || undefined });
     reset();
+  }
+
+  function handleGenerate() {
+    const idea = value.trim();
+    if (!idea) return;
+    const boardContext = qc.getQueryData<BoardDetail>(["board", boardId])?.name;
+    generate.mutate(
+      { idea, boardContext },
+      {
+        onSuccess: (ai) => {
+          setValue(ai.title);
+          setDescription(buildDescription(ai));
+        },
+      },
+    );
   }
 
   if (!open) {
@@ -57,13 +92,43 @@ export function AddCardForm({
         onKeyDown={(e) => {
           if (e.key === "Escape") reset();
         }}
-        placeholder="Enter a title for this card…"
+        disabled={generate.isPending}
+        placeholder="Enter a title — or a rough idea to ✨ generate…"
         rows={2}
-        className="w-full resize-none rounded-md border bg-background p-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="w-full resize-none rounded-md border bg-background p-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
       />
+
+      {description !== "" && (
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          disabled={generate.isPending}
+          placeholder="Description"
+          rows={6}
+          maxLength={5000}
+          className="w-full resize-y rounded-md border bg-background p-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+        />
+      )}
+
+      {generate.error && (
+        <p role="alert" className="text-sm text-destructive">
+          {generate.error.message}
+        </p>
+      )}
+
       <div className="flex items-center gap-2">
-        <Button type="submit" size="sm" disabled={!value.trim()}>
+        <Button type="submit" size="sm" disabled={!value.trim() || generate.isPending}>
           Add card
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={handleGenerate}
+          disabled={!value.trim() || generate.isPending}
+        >
+          <SparklesIcon />
+          {generate.isPending ? "Generating…" : "Generate"}
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={reset}>
           Cancel

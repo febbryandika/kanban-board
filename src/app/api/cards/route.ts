@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { columnId, title } = parsed.data;
+    const { columnId, title, description } = parsed.data;
 
     const [column] = await db
       .select({ boardId: columns.boardId })
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
     const [card] = await db
       .insert(cards)
-      .values({ columnId, title, sortOrder })
+      .values({ columnId, title, description: description ?? null, sortOrder })
       .returning();
 
     return NextResponse.json(card, { status: 201 });
