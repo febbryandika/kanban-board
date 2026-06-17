@@ -57,6 +57,8 @@ export const updateColumnSchema = z
 export const createCardSchema = z.object({
   columnId: z.string().min(1),
   title: z.string().trim().min(1, "Card title is required").max(200),
+  // Optional at create so the AI-prefilled description persists in one request.
+  description: z.string().max(5000, "Description is too long").optional(),
 });
 
 // PATCH /api/cards/:id covers both a move (columnId + sortOrder) and modal field
@@ -102,6 +104,12 @@ export const createCommentSchema = z.object({
   content: z.string().trim().min(1, "Comment cannot be empty").max(2000),
 });
 
+// AI card generator request body (SPEC §3.5 / §5.3). Pre-fill only — never creates.
+export const aiCardGenerateSchema = z.object({
+  idea: z.string().trim().min(1, "Describe an idea first").max(500),
+  boardContext: z.string().max(500).optional(),
+});
+
 export type CreateBoardInput = z.infer<typeof createBoardSchema>;
 export type RenameBoardInput = z.infer<typeof renameBoardSchema>;
 export type DeleteBoardInput = z.infer<typeof deleteBoardSchema>;
@@ -116,3 +124,4 @@ export type UpdateLabelInput = z.infer<typeof updateLabelSchema>;
 export type DeleteLabelInput = z.infer<typeof deleteLabelSchema>;
 export type CardLabelInput = z.infer<typeof cardLabelSchema>;
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
+export type AiCardGenerateInput = z.infer<typeof aiCardGenerateSchema>;

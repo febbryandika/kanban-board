@@ -19,13 +19,21 @@ export function useCreateCard(boardId: string) {
   const qc = useQueryClient();
   const key = boardKey(boardId);
   return useMutation({
-    mutationFn: ({ columnId, title }: { columnId: string; title: string }) =>
+    mutationFn: ({
+      columnId,
+      title,
+      description,
+    }: {
+      columnId: string;
+      title: string;
+      description?: string;
+    }) =>
       fetchJson<Card>("/api/cards", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ columnId, title }),
+        body: JSON.stringify({ columnId, title, description }),
       }),
-    onMutate: async ({ columnId, title }) => {
+    onMutate: async ({ columnId, title, description }) => {
       await qc.cancelQueries({ queryKey: key });
       const prev = qc.getQueryData<BoardDetail>(key);
       if (prev) {
@@ -40,7 +48,7 @@ export function useCreateCard(boardId: string) {
           id: `temp-${crypto.randomUUID()}`,
           columnId,
           title,
-          description: null,
+          description: description ?? null,
           dueDate: null,
           sortOrder: keyForAppend(last),
           assigneeId: null,
