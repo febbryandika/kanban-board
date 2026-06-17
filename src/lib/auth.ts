@@ -18,6 +18,20 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
   },
+  // Rate limit auth endpoints (SPEC §8). Database storage keeps counters
+  // consistent across serverless instances (reuses Neon — no external infra).
+  // Stricter custom rules guard the credential endpoints against brute force.
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+    modelName: "rateLimit",
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 3600, max: 10 },
+    },
+  },
   // Must be the last plugin so it can persist Set-Cookie headers in the
   // Next.js server context (Server Actions / Route Handlers).
   plugins: [nextCookies()],

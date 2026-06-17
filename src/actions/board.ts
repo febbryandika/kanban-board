@@ -94,7 +94,7 @@ export async function deleteBoard(
   return runAction(async () => {
     const parsed = deleteBoardSchema.safeParse({ id: formData.get("id") });
     if (!parsed.success) {
-      return fail("VALIDATION", "Invalid input");
+      return fail("VALIDATION", parsed.error.issues[0]?.message ?? "Invalid input");
     }
 
     await requireOwner(parsed.data.id);
