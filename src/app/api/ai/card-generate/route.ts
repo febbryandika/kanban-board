@@ -4,6 +4,7 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 
 import { requireSession, errorResponse } from "@/lib/auth";
+import { checkAiRateLimit } from "@/lib/ratelimit";
 import { aiCardGenerateSchema } from "@/lib/validations";
 
 /**
@@ -14,7 +15,7 @@ import { aiCardGenerateSchema } from "@/lib/validations";
 export async function POST(req: Request) {
   const start = Date.now();
   try {
-    await requireSession(); // 401 via errorResponse if unauthenticated
+    const session = await requireSession(); // 401 via errorResponse if unauthenticated
 
     const parsed = aiCardGenerateSchema.safeParse(await req.json());
     if (!parsed.success) {
@@ -26,6 +27,20 @@ export async function POST(req: Request) {
           },
         },
         { status: 400 },
+      );
+    }
+
+    // Per-user rate limit (SPEC §8) — guards the OpenAI quota from spam.
+    const rl = await checkAiRateLimit(session.user.id);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "RATE_LIMITED",
+            message: "Too many AI requests. Try again later.",
+          },
+        },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
       );
     }
 

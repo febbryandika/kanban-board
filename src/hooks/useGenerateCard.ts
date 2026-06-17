@@ -17,6 +17,9 @@ type GenerateInput = { idea: string; boardContext?: string };
  * draft and creates the card via `useCreateCard`. Exposes `isPending`/`error`. */
 export function useGenerateCard() {
   return useMutation({
+    // Failures surface inline in the add-card form (the form is open), so skip
+    // the global error toast wired in query-client.ts to avoid a redundant one.
+    meta: { suppressErrorToast: true },
     mutationFn: ({ idea, boardContext }: GenerateInput) =>
       fetchJson<GeneratedCard>("/api/ai/card-generate", {
         method: "POST",

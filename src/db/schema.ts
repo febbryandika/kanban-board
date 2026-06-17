@@ -3,6 +3,8 @@ import {
   text,
   boolean,
   timestamp,
+  integer,
+  bigint,
   index,
   unique,
 } from "drizzle-orm/pg-core";
@@ -118,6 +120,15 @@ export const comments = pgTable(
   },
   (t) => [index("idx_comment_card").on(t.cardId)],
 );
+
+// Per-user fixed-window limiter for the AI endpoint (SPEC §8). Postgres-backed
+// so it stays correct across serverless instances with no external infra.
+// One row per user; the window resets lazily on the first request after it expires.
+export const aiRateLimits = pgTable("ai_rate_limits", {
+  userId: text("user_id").primaryKey(),
+  count: integer("count").notNull().default(0),
+  windowStart: bigint("window_start", { mode: "number" }).notNull(), // epoch ms
+});
 
 // Inferred row types for use across the app.
 export type Board = typeof boards.$inferSelect;

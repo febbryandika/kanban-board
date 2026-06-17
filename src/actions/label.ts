@@ -83,7 +83,8 @@ export async function deleteLabel(
 ): Promise<ActionResult> {
   return runAction(async () => {
     const parsed = deleteLabelSchema.safeParse(input);
-    if (!parsed.success) return fail("VALIDATION", "Invalid input");
+    if (!parsed.success)
+      return fail("VALIDATION", parsed.error.issues[0]?.message ?? "Invalid input");
 
     const [existing] = await db
       .select({ boardId: labels.boardId })
