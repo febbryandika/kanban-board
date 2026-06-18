@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
+  LogOutIcon,
   MoreVerticalIcon,
   PencilIcon,
   Trash2Icon,
@@ -23,9 +24,10 @@ import {
 import { RenameBoardDialog } from "./rename-board-dialog";
 import { DeleteBoardDialog } from "./delete-board-dialog";
 import { BoardMembersDialog } from "./board-members-dialog";
+import { LeaveBoardDialog } from "./leave-board-dialog";
 import type { BoardListItem, BoardMemberView } from "./types";
 
-type DialogKind = "rename" | "delete" | "members";
+type DialogKind = "rename" | "delete" | "members" | "leave";
 
 export function BoardCard({
   board,
@@ -72,7 +74,7 @@ export function BoardCard({
                     Manage members
                   </DropdownMenuItem>
                 )}
-                {isOwner && (
+                {isOwner ? (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -81,6 +83,17 @@ export function BoardCard({
                     >
                       <Trash2Icon />
                       Delete
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => setDialog("leave")}
+                    >
+                      <LogOutIcon />
+                      Leave board
                     </DropdownMenuItem>
                   </>
                 )}
@@ -115,6 +128,13 @@ export function BoardCard({
           boardName={board.name}
           members={members}
           currentUserId={currentUserId}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === "leave" && (
+        <LeaveBoardDialog
+          boardId={board.id}
+          boardName={board.name}
           onClose={() => setDialog(null)}
         />
       )}

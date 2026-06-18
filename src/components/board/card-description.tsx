@@ -76,7 +76,21 @@ export function CardDescription({
         </div>
       ) : description ? (
         <div className={MARKDOWN_CLASS}>
-          <ReactMarkdown>{description}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              // Open links in a new tab and harden against tab-nabbing. `node`
+              // is react-markdown's AST node — destructured out so it never
+              // reaches the DOM anchor.
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              a({ node, ...props }) {
+                return (
+                  <a {...props} target="_blank" rel="noopener noreferrer" />
+                );
+              },
+            }}
+          >
+            {description}
+          </ReactMarkdown>
         </div>
       ) : (
         <button

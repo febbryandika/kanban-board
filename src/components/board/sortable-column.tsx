@@ -19,16 +19,23 @@ export function SortableColumn({
   members?: BoardMemberInfo[];
 }) {
   const {
+    active,
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({
     id: column.id,
     data: { type: "column", columnId: column.id, sortOrder: column.sortOrder },
   });
+
+  // True while a card is dragged over this column's empty/below-the-cards area
+  // (when over a specific card, that card owns the `over` instead). Drives the
+  // column-level drop highlight in BoardColumn.
+  const isCardOver = isOver && active?.data.current?.type === "card";
 
   return (
     <div
@@ -41,6 +48,7 @@ export function SortableColumn({
         column={column}
         members={members}
         dragHandle={{ attributes, listeners }}
+        isCardOver={isCardOver}
       />
     </div>
   );

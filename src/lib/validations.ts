@@ -39,6 +39,15 @@ export const inviteMemberSchema = z.object({
     .pipe(z.string().email("Enter a valid email")),
 });
 
+export const removeMemberSchema = z.object({
+  boardId: z.string().min(1),
+  userId: z.string().min(1),
+});
+
+export const leaveBoardSchema = z.object({
+  boardId: z.string().min(1),
+});
+
 export const createColumnSchema = z.object({
   boardId: z.string().min(1),
   name: z.string().trim().min(1, "Column name is required").max(40),
@@ -122,6 +131,8 @@ export type CreateBoardInput = z.infer<typeof createBoardSchema>;
 export type RenameBoardInput = z.infer<typeof renameBoardSchema>;
 export type DeleteBoardInput = z.infer<typeof deleteBoardSchema>;
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+export type RemoveMemberInput = z.infer<typeof removeMemberSchema>;
+export type LeaveBoardInput = z.infer<typeof leaveBoardSchema>;
 export type CreateColumnInput = z.infer<typeof createColumnSchema>;
 export type UpdateColumnInput = z.infer<typeof updateColumnSchema>;
 export type CreateCardInput = z.infer<typeof createCardSchema>;

@@ -4,7 +4,7 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { deleteBoard } from "@/actions/board";
+import { leaveBoard } from "@/actions/board";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -17,7 +17,9 @@ import {
 
 import { SubmitButton } from "./submit-button";
 
-export function DeleteBoardDialog({
+/** Confirm dialog for a member leaving a shared board. Owners never see this —
+ * they delete the board instead (so a board always keeps an owner). */
+export function LeaveBoardDialog({
   boardId,
   boardName,
   onClose,
@@ -27,15 +29,15 @@ export function DeleteBoardDialog({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [state, formAction] = useActionState(deleteBoard, undefined);
+  const [state, formAction] = useActionState(leaveBoard, undefined);
 
   useEffect(() => {
     if (state?.ok) {
-      toast.success("Board deleted");
+      toast.success(`You left “${boardName}”`);
       onClose();
       router.refresh();
     }
-  }, [state, onClose, router]);
+  }, [state, boardName, onClose, router]);
 
   return (
     <AlertDialog
@@ -46,10 +48,10 @@ export function DeleteBoardDialog({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete board?</AlertDialogTitle>
+          <AlertDialogTitle>Leave board?</AlertDialogTitle>
           <AlertDialogDescription>
-            “{boardName}” and all of its columns, cards, labels, and comments
-            will be permanently deleted. This cannot be undone.
+            You&apos;ll lose access to “{boardName}”. An owner can invite you
+            back later.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {state && !state.ok && (
@@ -60,9 +62,9 @@ export function DeleteBoardDialog({
         <AlertDialogFooter>
           <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
           <form action={formAction} className="contents">
-            <input type="hidden" name="id" value={boardId} />
-            <SubmitButton variant="destructive" pendingLabel="Deleting…">
-              Delete
+            <input type="hidden" name="boardId" value={boardId} />
+            <SubmitButton variant="destructive" pendingLabel="Leaving…">
+              Leave
             </SubmitButton>
           </form>
         </AlertDialogFooter>
