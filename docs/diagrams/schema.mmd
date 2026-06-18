@@ -1,0 +1,73 @@
+%% Entity-relationship diagram for Kanban Board AI.
+%% Solid lines = DB foreign keys (ON DELETE CASCADE). Dashed = app-layer refs (no DB FK).
+%% Render: npx -y @mermaid-js/mermaid-cli -i schema.mmd -o schema.svg
+erDiagram
+    user ||--o{ board_members : "is"
+    boards ||--o{ board_members : "has"
+    boards ||--o{ columns : "cascade"
+    boards ||--o{ labels : "cascade"
+    columns ||--o{ cards : "cascade"
+    cards ||--o{ card_labels : "cascade"
+    labels ||--o{ card_labels : "cascade"
+    cards ||--o{ comments : "cascade"
+    user ||..o{ cards : "assignee (app-layer)"
+    user ||..o{ comments : "author (app-layer)"
+    user ||..o{ ai_rate_limits : "limits (app-layer)"
+
+    user {
+        text id PK
+        text name
+        text email UK
+        boolean email_verified
+        text image
+    }
+    boards {
+        text id PK
+        text name
+        text bg_color "default #6366f1"
+        timestamptz created_at
+    }
+    board_members {
+        text board_id FK
+        text user_id "app-layer ref"
+        text role "owner | member"
+    }
+    columns {
+        text id PK
+        text board_id FK
+        text name
+        text sort_order "fractional index"
+    }
+    labels {
+        text id PK
+        text board_id FK
+        text name
+        text color "hex"
+    }
+    cards {
+        text id PK
+        text column_id FK
+        text title
+        text description "nullable"
+        timestamptz due_date "nullable"
+        text sort_order "fractional index"
+        boolean is_archived "soft delete"
+        text assignee_id "app-layer ref"
+        timestamptz created_at
+    }
+    card_labels {
+        text card_id FK
+        text label_id FK
+    }
+    comments {
+        text id PK
+        text card_id FK
+        text user_id "app-layer ref"
+        text content
+        timestamptz created_at
+    }
+    ai_rate_limits {
+        text user_id PK
+        integer count
+        bigint window_start "epoch ms"
+    }

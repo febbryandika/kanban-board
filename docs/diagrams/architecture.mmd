@@ -1,0 +1,37 @@
+%% Architecture / data-flow diagram for Kanban Board AI.
+%% Render: npx -y @mermaid-js/mermaid-cli -i architecture.mmd -o architecture.svg
+flowchart TB
+    subgraph Browser["Browser — React 19 client"]
+        UI["KanbanBoard · BoardColumn · CardItem<br/>@dnd-kit drag &amp; drop"]
+        Modal["CardModal<br/>description · comments · labels · due date · assignee"]
+        Z["Zustand UI store<br/>activeCardId / drag state"]
+        TQ["TanStack Query hooks<br/>useBoard · useMoveCard · useMoveColumn · …"]
+        Forms["Server-Action forms<br/>board · members · labels"]
+        UI --> Z
+        UI --> TQ
+        Modal --> TQ
+    end
+
+    subgraph Server["Next.js 16 server — one deployable app"]
+        RH["Route Handlers /api/*<br/>board reads + interactive moves"]
+        SA["Server Actions<br/>+ revalidatePath"]
+        AIR["/api/ai/card-generate"]
+        Auth["Better Auth<br/>requireSession · requireMember · requireOwner"]
+        DZ["Drizzle ORM"]
+    end
+
+    DB[("Neon PostgreSQL")]
+    OAI[["OpenAI<br/>Vercel AI SDK · generateObject"]]
+
+    TQ -->|"fetch JSON — optimistic + rollback"| RH
+    Forms -->|"form submit"| SA
+    UI -->|"✨ Generate (pre-fill only)"| AIR
+    RH --> Auth
+    SA --> Auth
+    AIR --> Auth
+    Auth --> DZ
+    RH --> DZ
+    SA --> DZ
+    DZ --> DB
+    AIR --> OAI
+    SA -.->|"revalidatePath → re-render"| Browser
