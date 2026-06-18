@@ -87,6 +87,7 @@ export function AddCardForm({
     >
       <textarea
         autoFocus
+        data-testid="card-title-input"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
@@ -100,6 +101,7 @@ export function AddCardForm({
 
       {description !== "" && (
         <textarea
+          data-testid="card-description-input"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           disabled={generate.isPending}

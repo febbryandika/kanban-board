@@ -41,6 +41,8 @@ export function SortableCard({
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={`touch-none ${isDragging ? "opacity-40" : ""}`}
+      data-testid="card"
+      data-card-title={card.title}
       {...attributes}
       {...listeners}
     >
