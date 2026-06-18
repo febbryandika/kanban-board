@@ -25,18 +25,20 @@ function BoardColumnImpl({
   members,
   dragHandle,
   isOverlay = false,
+  isCardOver = false,
 }: {
   boardId: string;
   column: BoardColumnWithCards;
   members?: BoardMemberInfo[];
   dragHandle?: ColumnDragHandle;
   isOverlay?: boolean;
+  isCardOver?: boolean;
 }) {
   const [isRenaming, setIsRenaming] = useState(false);
 
   return (
     <div
-      className="flex w-72 shrink-0 flex-col gap-3 rounded-xl bg-muted/50 p-3"
+      className="flex w-[85vw] max-w-[18rem] shrink-0 flex-col gap-3 rounded-xl bg-muted/50 p-3 sm:w-72"
       data-testid="board-column"
       data-column-name={column.name}
     >
@@ -54,6 +56,7 @@ function BoardColumnImpl({
               className="flex flex-1 items-center gap-2 touch-none select-none [cursor:grab] active:[cursor:grabbing]"
               {...dragHandle?.attributes}
               {...dragHandle?.listeners}
+              aria-label={`Reorder column ${column.name}`}
             >
               <h2 className="truncate text-sm font-semibold">{column.name}</h2>
               <Badge variant="secondary">{column.cards.length}</Badge>
@@ -70,7 +73,15 @@ function BoardColumnImpl({
 
       <div className="flex flex-col gap-2">
         {column.cards.length === 0 ? (
-          <p className="px-1 py-2 text-xs text-muted-foreground">No cards</p>
+          <p
+            className={`rounded-md border border-dashed py-6 text-center text-xs ${
+              isCardOver
+                ? "border-primary bg-primary/5 text-foreground"
+                : "text-muted-foreground"
+            }`}
+          >
+            No cards yet
+          </p>
         ) : isOverlay ? (
           column.cards.map((card) => (
             <CardItem
@@ -94,6 +105,13 @@ function BoardColumnImpl({
               />
             ))}
           </SortableContext>
+        )}
+        {/* Append guide when a card hovers the column's empty area below the cards. */}
+        {!isOverlay && isCardOver && column.cards.length > 0 && (
+          <span
+            aria-hidden
+            className="pointer-events-none h-0.5 rounded-full bg-primary"
+          />
         )}
       </div>
 

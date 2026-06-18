@@ -2,8 +2,20 @@
 
 import { useActionState, useEffect, useId, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
 
-import { inviteMember } from "@/actions/board";
+import { inviteMember, removeMember } from "@/actions/board";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,12 +125,17 @@ export function BoardMembersDialog({
                   {m.email}
                 </p>
               </div>
-              <Badge
-                variant={m.role === "owner" ? "default" : "secondary"}
-                className="capitalize"
-              >
-                {m.role}
-              </Badge>
+              <div className="flex shrink-0 items-center gap-2">
+                <Badge
+                  variant={m.role === "owner" ? "default" : "secondary"}
+                  className="capitalize"
+                >
+                  {m.role}
+                </Badge>
+                {m.role !== "owner" && (
+                  <RemoveMemberButton boardId={boardId} member={m} />
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -130,5 +147,65 @@ export function BoardMembersDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Owner-only control to remove a member, behind a confirm. On success the board
+ * list is refreshed (the row disappears) and a toast confirms the removal. */
+function RemoveMemberButton({
+  boardId,
+  member,
+}: {
+  boardId: string;
+  member: BoardMemberView;
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState(removeMember, undefined);
+
+  useEffect(() => {
+    if (state?.ok) {
+      toast.success(`Removed ${member.name}`);
+      router.refresh();
+    }
+  }, [state, member.name, router]);
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Remove ${member.name}`}
+          />
+        }
+      >
+        <Trash2Icon />
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remove member?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {member.name} will lose access to this board. You can invite them
+            again later.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {state && !state.ok && (
+          <p role="alert" className="text-sm text-destructive">
+            {state.error.message}
+          </p>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
+          <form action={formAction} className="contents">
+            <input type="hidden" name="boardId" value={boardId} />
+            <input type="hidden" name="userId" value={member.userId} />
+            <SubmitButton variant="destructive" pendingLabel="Removing…">
+              Remove
+            </SubmitButton>
+          </form>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

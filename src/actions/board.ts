@@ -17,6 +17,8 @@ import {
   renameBoardSchema,
   deleteBoardSchema,
   inviteMemberSchema,
+  removeMemberSchema,
+  leaveBoardSchema,
 } from "@/lib/validations";
 
 /** Create a board and the owner membership row atomically. */
@@ -99,6 +101,90 @@ export async function deleteBoard(
 
     await requireOwner(parsed.data.id);
     await db.delete(boards).where(eq(boards.id, parsed.data.id));
+
+    revalidatePath("/boards");
+    return ok(undefined);
+  });
+}
+
+/** Remove a member from a board (owner only). The owner row can't be removed —
+ * to step down, the owner deletes the board. */
+export async function removeMember(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  return runAction("board.removeMember", async () => {
+    const parsed = removeMemberSchema.safeParse({
+      boardId: formData.get("boardId"),
+      userId: formData.get("userId"),
+    });
+    if (!parsed.success) {
+      return fail("VALIDATION", parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireOwner(parsed.data.boardId);
+
+    const [target] = await db
+      .select({ role: boardMembers.role })
+      .from(boardMembers)
+      .where(
+        and(
+          eq(boardMembers.boardId, parsed.data.boardId),
+          eq(boardMembers.userId, parsed.data.userId),
+        ),
+      )
+      .limit(1);
+    if (!target) {
+      return fail("NOT_MEMBER", "That user is not a member");
+    }
+    if (target.role === "owner") {
+      return fail("CANNOT_REMOVE_OWNER", "The board owner can't be removed");
+    }
+
+    await db
+      .delete(boardMembers)
+      .where(
+        and(
+          eq(boardMembers.boardId, parsed.data.boardId),
+          eq(boardMembers.userId, parsed.data.userId),
+        ),
+      );
+
+    revalidatePath("/boards");
+    return ok(undefined);
+  });
+}
+
+/** Leave a board you were invited to. Owners can't leave — they delete the board
+ * instead — so there's never a board left without an owner. */
+export async function leaveBoard(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  return runAction("board.leave", async () => {
+    const parsed = leaveBoardSchema.safeParse({
+      boardId: formData.get("boardId"),
+    });
+    if (!parsed.success) {
+      return fail("VALIDATION", parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    const { session, membership } = await requireMember(parsed.data.boardId);
+    if (membership.role === "owner") {
+      return fail(
+        "OWNER_CANNOT_LEAVE",
+        "Owners can't leave — delete the board instead",
+      );
+    }
+
+    await db
+      .delete(boardMembers)
+      .where(
+        and(
+          eq(boardMembers.boardId, parsed.data.boardId),
+          eq(boardMembers.userId, session.user.id),
+        ),
+      );
 
     revalidatePath("/boards");
     return ok(undefined);

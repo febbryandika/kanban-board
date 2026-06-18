@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { createBoard } from "@/actions/board";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export function CreateBoardForm() {
 
   useEffect(() => {
     if (state?.ok) {
+      toast.success("Board created");
       router.push("/boards");
       router.refresh();
     }

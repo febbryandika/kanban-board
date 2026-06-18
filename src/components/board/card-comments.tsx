@@ -5,6 +5,7 @@ import { Trash2Icon } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   useComments,
@@ -84,7 +85,10 @@ export function CardComments({
             const canDelete =
               !pending && (c.userId === currentUser.userId || canModerate);
             return (
-              <li key={c.id} className="flex gap-2.5">
+              <li
+                key={c.id}
+                className={`flex gap-2.5 ${pending ? "opacity-60" : ""}`}
+              >
                 <Avatar size="sm" className="mt-0.5">
                   <AvatarFallback>{getInitials(c.authorName)}</AvatarFallback>
                 </Avatar>
@@ -94,7 +98,7 @@ export function CardComments({
                       {c.authorName}
                     </span>
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatTime(c.createdAt)}
+                      {pending ? "Posting…" : formatTime(c.createdAt)}
                     </span>
                     {canDelete && (
                       <Button
@@ -126,10 +130,10 @@ function CommentsSkeleton() {
     <div className="flex flex-col gap-3" aria-hidden>
       {[0, 1].map((i) => (
         <div key={i} className="flex gap-2.5">
-          <span className="size-6 shrink-0 rounded-full bg-muted" />
+          <Skeleton className="size-6 shrink-0 rounded-full" />
           <div className="flex flex-1 flex-col gap-1.5">
-            <span className="h-3 w-24 rounded bg-muted" />
-            <span className="h-3 w-full rounded bg-muted" />
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-full" />
           </div>
         </div>
       ))}

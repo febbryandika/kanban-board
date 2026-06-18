@@ -9,6 +9,8 @@ import {
   createCommentSchema,
   createLabelSchema,
   inviteMemberSchema,
+  removeMemberSchema,
+  leaveBoardSchema,
 } from "@/lib/validations";
 
 describe("createBoardSchema", () => {
@@ -93,5 +95,20 @@ describe("inviteMemberSchema", () => {
   it("lowercases and validates the email", () => {
     expect(inviteMemberSchema.parse({ boardId: "b1", email: "USER@X.COM" }).email).toBe("user@x.com");
     expect(inviteMemberSchema.safeParse({ boardId: "b1", email: "nope" }).success).toBe(false);
+  });
+});
+
+describe("removeMemberSchema", () => {
+  it("requires both boardId and userId", () => {
+    expect(removeMemberSchema.safeParse({ boardId: "b1", userId: "u1" }).success).toBe(true);
+    expect(removeMemberSchema.safeParse({ boardId: "b1" }).success).toBe(false);
+    expect(removeMemberSchema.safeParse({ boardId: "", userId: "u1" }).success).toBe(false);
+  });
+});
+
+describe("leaveBoardSchema", () => {
+  it("requires a non-empty boardId", () => {
+    expect(leaveBoardSchema.safeParse({ boardId: "b1" }).success).toBe(true);
+    expect(leaveBoardSchema.safeParse({ boardId: "" }).success).toBe(false);
   });
 });

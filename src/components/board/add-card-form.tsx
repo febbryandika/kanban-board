@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { PlusIcon, SparklesIcon } from "lucide-react";
+import { Loader2Icon, PlusIcon, SparklesIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useCreateCard } from "@/hooks/useCardMutations";
@@ -61,6 +62,7 @@ export function AddCardForm({
         onSuccess: (ai) => {
           setValue(ai.title);
           setDescription(buildDescription(ai));
+          toast.success("Card draft ready — review and save");
         },
       },
     );
@@ -129,7 +131,11 @@ export function AddCardForm({
           onClick={handleGenerate}
           disabled={!value.trim() || generate.isPending}
         >
-          <SparklesIcon />
+          {generate.isPending ? (
+            <Loader2Icon className="animate-spin" />
+          ) : (
+            <SparklesIcon />
+          )}
           {generate.isPending ? "Generating…" : "Generate"}
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={reset}>

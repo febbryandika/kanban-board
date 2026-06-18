@@ -167,7 +167,9 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
           style={{ backgroundColor: data.bgColor }}
           aria-hidden
         />
-        <h1 className="text-lg font-semibold tracking-tight">{data.name}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight">
+          {data.name}
+        </h1>
         <Button
           variant="ghost"
           size="sm"
@@ -201,6 +203,11 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
             ))}
           </SortableContext>
           <AddColumnForm boardId={boardId} />
+          {data.columns.length === 0 && (
+            <p className="self-start py-2 text-sm text-muted-foreground">
+              No columns yet — add one to get started.
+            </p>
+          )}
         </div>
 
         <DragOverlay>
