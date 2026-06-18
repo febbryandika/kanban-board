@@ -110,6 +110,14 @@ export const aiCardGenerateSchema = z.object({
   boardContext: z.string().max(500).optional(),
 });
 
+// Shape `generateObject()` must return (SPEC §5.3). Lives here so the AI route and
+// its unit test share one schema instead of duplicating it.
+export const aiCardOutputSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  acceptanceCriteria: z.array(z.string()).max(5),
+});
+
 export type CreateBoardInput = z.infer<typeof createBoardSchema>;
 export type RenameBoardInput = z.infer<typeof renameBoardSchema>;
 export type DeleteBoardInput = z.infer<typeof deleteBoardSchema>;
