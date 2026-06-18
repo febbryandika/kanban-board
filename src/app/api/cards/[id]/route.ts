@@ -4,12 +4,15 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { boardMembers, cards, columns } from "@/db/schema";
 import { errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
 import { loadCardForMember } from "@/lib/cards";
 import { updateCardSchema } from "@/lib/validations";
 
+export const PATCH = withApiLogging("cards.update", updateCard);
+
 /** PATCH a card: either a move (columnId + sortOrder) or modal field edits
  * (title / description / dueDate / assignee). Only the targeted row is written. */
-export async function PATCH(
+async function updateCard(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {

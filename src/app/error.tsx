@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
 
 /** Root-level error boundary — a safety net for unhandled render errors on any
  * page segment (SPEC §11). The board view has its own boundary in board/[id]. */
@@ -14,7 +15,11 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[app] unhandled error:", error);
+    logger.error("ui.error_boundary", {
+      scope: "app",
+      message: error.message,
+      digest: error.digest,
+    });
   }, [error]);
 
   return (

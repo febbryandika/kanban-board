@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
 
 /**
  * Error boundary for the board view (SPEC §11). Catches render/throw errors in
@@ -18,7 +19,11 @@ export default function BoardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[board] render error:", error);
+    logger.error("ui.error_boundary", {
+      scope: "board",
+      message: error.message,
+      digest: error.digest,
+    });
   }, [error]);
 
   return (

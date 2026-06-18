@@ -24,7 +24,7 @@ export async function createBoard(
   _prev: ActionResult<{ boardId: string }> | undefined,
   formData: FormData,
 ): Promise<ActionResult<{ boardId: string }>> {
-  return runAction(async () => {
+  return runAction("board.create", async () => {
     const session = await requireSession();
 
     const parsed = createBoardSchema.safeParse({
@@ -66,7 +66,7 @@ export async function renameBoard(
   _prev: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  return runAction(async () => {
+  return runAction("board.rename", async () => {
     const parsed = renameBoardSchema.safeParse({
       id: formData.get("id"),
       name: formData.get("name"),
@@ -91,7 +91,7 @@ export async function deleteBoard(
   _prev: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  return runAction(async () => {
+  return runAction("board.delete", async () => {
     const parsed = deleteBoardSchema.safeParse({ id: formData.get("id") });
     if (!parsed.success) {
       return fail("VALIDATION", parsed.error.issues[0]?.message ?? "Invalid input");
@@ -110,7 +110,7 @@ export async function inviteMember(
   _prev: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  return runAction(async () => {
+  return runAction("board.inviteMember", async () => {
     const parsed = inviteMemberSchema.safeParse({
       boardId: formData.get("boardId"),
       email: formData.get("email"),

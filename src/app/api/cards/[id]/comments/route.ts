@@ -4,12 +4,17 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { comments, user } from "@/db/schema";
 import { errorResponse } from "@/lib/auth";
+import { withApiLogging } from "@/lib/api-logging";
 import { loadCardForMember } from "@/lib/cards";
 import { createCommentSchema } from "@/lib/validations";
 import type { CardComment } from "@/types/board";
 
+export const GET = withApiLogging("comments.list", getComments);
+export const POST = withApiLogging("comments.create", createComment);
+export const DELETE = withApiLogging("comments.delete", deleteComment);
+
 /** GET a card's comments, oldest-first (chronological, SPEC §3.3 / idx_comment_card). */
-export async function GET(
+async function getComments(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -48,7 +53,7 @@ export async function GET(
 }
 
 /** POST a new comment on a card, authored by the current user. */
-export async function POST(
+async function createComment(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -95,7 +100,7 @@ export async function POST(
 }
 
 /** DELETE a comment (`?commentId=`). The author or the board owner may delete it. */
-export async function DELETE(
+async function deleteComment(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
