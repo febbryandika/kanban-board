@@ -35,7 +35,11 @@ function BoardColumnImpl({
   const [isRenaming, setIsRenaming] = useState(false);
 
   return (
-    <div className="flex w-72 shrink-0 flex-col gap-3 rounded-xl bg-muted/50 p-3">
+    <div
+      className="flex w-72 shrink-0 flex-col gap-3 rounded-xl bg-muted/50 p-3"
+      data-testid="board-column"
+      data-column-name={column.name}
+    >
       <div className="flex items-center justify-between gap-1 px-1">
         {isRenaming ? (
           <RenameColumnInput
