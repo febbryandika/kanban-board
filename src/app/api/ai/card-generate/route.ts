@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { z } from "zod";
 
 import { requireSession, errorResponse } from "@/lib/auth";
 import { withApiLogging } from "@/lib/api-logging";
 import { logger, serializeError } from "@/lib/logger";
 import { checkAiRateLimit } from "@/lib/ratelimit";
-import { aiCardGenerateSchema } from "@/lib/validations";
+import { aiCardGenerateSchema, aiCardOutputSchema } from "@/lib/validations";
 
 const MODEL = "gpt-4.1-mini";
 
@@ -58,11 +57,7 @@ async function generateCard(req: Request) {
     try {
       const { object } = await generateObject({
         model: openai(MODEL),
-        schema: z.object({
-          title: z.string(),
-          description: z.string(),
-          acceptanceCriteria: z.array(z.string()).max(5),
-        }),
+        schema: aiCardOutputSchema,
         abortSignal: signal,
         prompt: `You are a project-management assistant. Turn a rough task idea into a clear card.
 Board context: ${boardContext ?? "General project"}
